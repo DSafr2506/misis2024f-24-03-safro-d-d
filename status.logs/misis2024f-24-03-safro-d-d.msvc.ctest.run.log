@@ -83,7 +83,7 @@ Release/D:/projects/misis2024f-check/misis2024f-24-03-safro-d-d/bin.check/doctes
 
 0% tests passed, 8 tests failed out of 8
 
-Total Test time (real) =   0.02 sec
+Total Test time (real) =   0.01 sec
 
 The following tests FAILED:
 	  1 - doctest_arrayd (Not Run)
