@@ -1,4 +1,4 @@
-STAMP: 20241217-072141
+STAMP: 20250110-155544
 ERROR: file codeforces.id is absent
 ERROR: file CMakeLists.txt is absent
 ERROR: file codeforces.id is absent
@@ -13,13 +13,11 @@ ERROR: file prj.test/complex_test.cpp is absent
 ERROR: file prj.test/stackl_doctest.cpp is absent
 ERROR: file prj.test/queuea_doctest.cpp is absent
 ERROR: CMake generator failed
-ERROR: invalid file name 1671
-ERROR: invalid file name 1701A
-ERROR: invalid file name 1872A
-ERROR: invalid file name 1873C
-ERROR: invalid file name 1873D
+OK: folder prj.codeforces structure is correct
 ERROR: lab complex - test build failed
+ERROR: lab complex_io - test build failed
 ERROR: lab rational - test build failed
+ERROR: lab rational_io - test build failed
 ERROR: lab arrayd - test build failed
 ERROR: lab arrayt - test build failed
 ERROR: lab stackl - test build failed
