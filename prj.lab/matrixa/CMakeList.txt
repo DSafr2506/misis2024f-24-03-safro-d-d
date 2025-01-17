@@ -1,1 +1,1 @@
-
+add_library(matrixa matrixa.cpp matrixa.hpp)
