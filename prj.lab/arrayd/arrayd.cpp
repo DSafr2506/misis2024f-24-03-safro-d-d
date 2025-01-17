@@ -1,189 +1,99 @@
-#include<arrayd/arrayd.hpp>
+// 2024 by Polevoi Dmitry under Unlicense
 
-#include<iostream>
+#include <arrayd/arrayd.hpp>
 
+#include <cstring>
+#include <stdexcept>
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
 
-ArrayD::ArrayD() {
-	memory_ = nullptr;
-	size_ = 0;
-	capacity_ = 0;
+ArrayD::ArrayD(const ArrayD& src)
+    : capacity_(src.size_)
+    , size_(capacity_)
+    , data_(new double[size_]) {
+    std::copy(src.data_, src.data_ + size_, data_);
 }
 
-ArrayD::ArrayD(const std::ptrdiff_t len) {
-	if (len < 0) {
-		throw std::invalid_argument("Expected non-negative value");
-	}
 
-	size_ = len;
-	capacity_ = size_ + 5;
-	memory_ = new double[capacity_] {};
-
-	for (std::ptrdiff_t i = 0; i < size_; i += 1) {
-		memory_[i] = 0.0;
-	}
-}
-
-ArrayD::ArrayD(const std::ptrdiff_t len, const double num) {
-	if (len < 0) {
-		throw std::invalid_argument("Expected non-negative value");
-	}
-
-	size_ = len;
-	capacity_ = size_ + 5;
-	memory_ = new double[capacity_] {};
-
-	for (std::ptrdiff_t i = 0; i < size_; i += 1) {
-		memory_[i] = num;
-	}
-}
-
-ArrayD::ArrayD(const ArrayD& rhs) {
-	if (this == &rhs) {
-		return;
-	}
-
-	size_ = rhs.size_;
-	capacity_ = rhs.capacity_;
-	memory_ = new double[capacity_] {};
-
-	if (rhs.memory_ == nullptr) {
-		memory_ = nullptr;
-	}
-
-	std::copy(rhs.memory_, rhs.memory_ + rhs.size_, memory_);
+ArrayD::ArrayD(const std::ptrdiff_t size)
+    : capacity_(size)
+    , size_(size) {
+    if (size_ <= 0) {
+        throw std::invalid_argument("ArrayD::ArrayD - non positive size");
+    }
+    data_ = new double[capacity_] {0.0};
 }
 
 ArrayD::~ArrayD() {
-	delete[] memory_;
-	memory_ = nullptr;
+    delete[] data_;
 }
 
 ArrayD& ArrayD::operator=(const ArrayD& rhs) {
-	if (this == &rhs) {
-		return *this;
-	}
-
-	size_ = rhs.size_;
-	capacity_ = rhs.capacity_;
-
-
-	if (memory_ != nullptr)
-		delete[] memory_;
-
-	memory_ = new double[capacity_] {};
-
-	for (std::ptrdiff_t i = 0; i < size_; i += 1) {
-		memory_[i] = rhs.memory_[i];
-	}
-	return *this;
+    if (this != &rhs) {
+        Resize(rhs.size_);
+        std::copy(rhs.data_,rhs.data_ + size_, data_);
+    }
+    return *this;
 }
 
-double& ArrayD::operator[](const std::ptrdiff_t i) {
-	if (i < 0 || i >= size_) {
-		throw std::out_of_range("Index out of range1");
-	}
-
-	return memory_[i];
+void ArrayD::Resize(const std::ptrdiff_t size) {
+    if (size < 0) {
+        throw std::invalid_argument("ArrayD::Resize - non positive size");
+    }
+    if (capacity_ < size) {
+        auto data = new double[size] {0.0};
+        if (0 < size_) {
+            std::copy(data_, data_+ size_, data);
+        }
+        std::swap(data_, data);
+        delete[] data;
+        capacity_ = size;
+    }
+    else {
+        if (size_ < size) {
+            std::memset(data_ + size_, 0, (size - size_) * sizeof(*data_));
+        }
+    }
+    size_ = size;
 }
 
-const double& ArrayD:: operator[](const std::ptrdiff_t i) const {
-	if (i < 0 || i >= size_) {
-		throw std::out_of_range("Index out of range2");
-	}
-	return memory_[i];
+
+double& ArrayD::operator[](const std::ptrdiff_t idx) {
+    if (idx < 0 || size_ <= idx) {
+        throw std::invalid_argument("ArrayD::operator[] - invalid index");
+    }
+    return *(data_ + idx);
 }
 
-std::ptrdiff_t ArrayD::ssize() const noexcept {
-	return size_;
+double ArrayD::operator[](const std::ptrdiff_t idx) const {
+    if (idx < 0 || size_ <= idx) {
+        throw std::invalid_argument("ArrayD::operator[] - invalid index");
+    }
+    return data_[idx];
 }
 
-void ArrayD::resize(const std::ptrdiff_t new_size) {
-	if (new_size <= 0) {
-		throw std::invalid_argument("Value out of range");
-	}
-
-	if (new_size < capacity_) {
-		size_ = new_size;
-		return;
-	}
-
-	capacity_ = new_size + 5;
-	double* new_memory = new double[capacity_] {};
-
-	for (std::ptrdiff_t i = 0; i < size_; i += 1) {
-		new_memory[i] = memory_[i];
-	}
-
-	delete[] memory_;
-	size_ = new_size;
-	memory_ = new_memory;
+void ArrayD::Insert(const std::ptrdiff_t idx, const double val) {
+    if (idx < 0 || size_ < idx) {
+        throw std::invalid_argument("ArrayD::Insert - invalid index");
+    }
+    Resize(size_ + 1);
+    if (idx != Size() - 1) {
+        std::copy_backward(data_ + idx,
+            data_ + size_ - 1, data_ + size_);
+    }
+    data_[idx] = val;
 }
 
-void ArrayD::insert(const std::ptrdiff_t i, const double value) {
-	if (i < 0 || i > size_) {
-		throw std::out_of_range("Index out of range3");
-	}
 
-	if (size_ + 1 < capacity_)
-		resize(size_ + 1);
-	else
-		size_ += 1;
-
-	for (std::ptrdiff_t j = size_; j > i; j -= 1) {
-		memory_[j] = memory_[j - 1];
-	}
-	memory_[i] = value;
-}
-
-void ArrayD::remove(const std::ptrdiff_t i) {
-	if (i < 0 || i >= size_) {
-		throw std::out_of_range("Index out of range4");
-	}
-
-	for (std::ptrdiff_t j = i; j < size_ - 1; j += 1) {
-		memory_[j] = memory_[j + 1];
-	}
-	size_ -= 1;
-}
-
-void ArrayD::push_back(const double value) {
-	insert(size_, value);
-}
-
-void ArrayD::pop_back() {
-	remove(size_ - 1);
-}
-
-std::istream& ArrayD::readFrom(std::istream& istrm) {
-	std::ptrdiff_t num_inp(0);
-
-	istrm >> num_inp;
-	if (num_inp < 0) {
-		throw std::invalid_argument("Expected positive value");
-	}
-
-	double temp_num = 0;
-	for (std::ptrdiff_t i = 0; i < num_inp; i += 1) {
-		istrm >> temp_num;
-		insert(size_, temp_num);
-	}
-
-	return istrm;
-}
-
-std::ostream& ArrayD::writeTo(std::ostream& ostrm) const {
-	ostrm << '[';
-	for (std::ptrdiff_t i = 0; i < size_ - 1; i += 1) {
-		ostrm << memory_[i] << separator_;
-	}
-	ostrm << memory_[size_ - 1] << ']';
-	return ostrm;
-}
-
-std::istream& operator>>(std::istream& istrm, ArrayD& rhs) {
-	return rhs.readFrom(istrm);
-}
-
-std::ostream& operator<<(std::ostream& ostrm, const ArrayD& rhs) {
-	return rhs.writeTo(ostrm);
+void ArrayD::Remove(const std::ptrdiff_t idx) {
+    if (idx < 0 || size_ <= idx) {
+        throw std::invalid_argument("ArrayD::operator[] - invalid index");
+    }
+    if (idx != size_ - 1) {
+        // óäàëÿåì ÍÅ â êîíöå
+        std::copy(data_ + idx + 1,
+            data_ + size_, data_ + idx);
+    }
+    Resize(size_ - 1);
 }
